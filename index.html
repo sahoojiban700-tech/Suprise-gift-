@@ -30,6 +30,10 @@
             text-align: center;
             padding: 20px;
             animation: fade .6s;
+            position: relative;
+            z-index: 5;
+            width: 100%;
+            max-width: 400px;
         }
 
         .active {
@@ -42,20 +46,34 @@
         }
 
         h1 {
-            font-size: 32px;
+            font-size: 28px;
             margin-bottom: 20px;
             text-shadow: 0 0 10px rgba(255, 77, 109, 0.5);
         }
 
         p {
-            font-size: 20px;
+            font-size: 18px;
             margin-bottom: 25px;
             color: #ddd;
         }
 
+        input {
+            padding: 12px 20px;
+            font-size: 16px;
+            border-radius: 25px;
+            border: 2px solid #ff4d6d;
+            background: #1a1a1a;
+            color: white;
+            text-align: center;
+            outline: none;
+            margin-bottom: 15px;
+            width: 80%;
+            box-shadow: 0 0 10px rgba(255, 77, 109, 0.2);
+        }
+
         button {
-            padding: 15px 35px;
-            font-size: 18px;
+            padding: 12px 30px;
+            font-size: 16px;
             font-weight: bold;
             border: none;
             border-radius: 50px;
@@ -65,11 +83,11 @@
             color: white;
             transition: .3s;
             box-shadow: 0 5px 15px rgba(255,77,109,0.3);
-            z-index: 10;
+            z-index: 20;
         }
 
         button:hover {
-            transform: scale(1.1);
+            transform: scale(1.05);
         }
 
         #gift {
@@ -85,17 +103,32 @@
         #no {
             position: relative;
             transition: 0.1s;
+            z-index: 20;
         }
 
         .button-container {
             display: flex;
             justify-content: center;
+            align-items: center;
             flex-wrap: wrap;
-            gap: 10px;
+            gap: 15px;
+            position: relative;
+            z-index: 20;
+        }
+
+        .error-msg {
+            color: #ff4d4d;
+            font-size: 14px;
+            margin-top: -5px;
+            margin-bottom: 10px;
+            display: none;
         }
     </style>
 </head>
 <body>
+
+    <!-- Background Music Element -->
+    <audio id="bgMusic" src="song.mp3" loop></audio>
 
     <!-- Page 1 (Tap to Open) -->
     <div id="p1" class="page active">
@@ -103,15 +136,24 @@
         <h1>Tap the Gift</h1>
     </div>
 
-    <!-- Page 2 (Ready to Start) -->
+    <!-- Page 2 (Security Check - DOB Password) -->
     <div id="p2" class="page">
-        <h1>Welcome Sakcham 😎</h1>
-        <p>Ready for the biggest surprise?</p>
-        <button onclick="next(3)">Next ➜</button>
+        <h1>Security Check 🔒</h1>
+        <p>Tu saccha dost hai toh bata... Jiban ka Birthday (DOB) kab hai?</p>
+        <input type="text" id="dobInput" placeholder="e.g. DDMMYYYY ya DD/MM/YYYY">
+        <div id="errMsg" class="error-msg">❌ Galat Password! Dost hone pe shakk hai mujhe 😂</div>
+        <button onclick="checkPassword()">Unlock Surprise 🔓</button>
     </div>
 
-    <!-- Page 3 (Question Stage) -->
+    <!-- Page 3 (Ready to Start) -->
     <div id="p3" class="page">
+        <h1>Welcome Sakcham 😎</h1>
+        <p>Identity Verified! Now ready for the surprise?</p>
+        <button onclick="next(4)">Start Questions ➜</button>
+    </div>
+
+    <!-- Page 4 (Question Stage) -->
+    <div id="p4" class="page">
         <h1 id="qTitle">Question 1 😂</h1>
         <p id="qText">Will you continue?</p>
         <div class="button-container">
@@ -120,8 +162,8 @@
         </div>
     </div>
 
-    <!-- The FINAL REVEAL Page -->
-    <div id="p4" class="page">
+    <!-- Page 5 (The FINAL REVEAL Page) -->
+    <div id="p5" class="page">
         <div style="
             display: flex;
             justify-content: center;
@@ -142,21 +184,40 @@
                 box-shadow: 0 0 30px hotpink;
                 border: 3px solid #ff4d6d;">
                 
-            <!-- If you want to add confetti over the image via Javascript, you can integrate that here too. -->
         </div>
     </div>
 
     <script>
-        // Move to Next Page
         const gift = document.getElementById("gift");
-        gift.onclick = () => { next(2); }
+        const audio = document.getElementById("bgMusic");
+
+        // Gift Tap karte hi Audio Play hoga
+        gift.onclick = () => { 
+            audio.play().catch(e => console.log("Audio play allowed on user tap"));
+            next(2); 
+        }
 
         function next(n) {
             document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
             document.getElementById("p" + n).classList.add("active");
         }
 
-        // Questions Logic
+        // PASSWORD CHECK LOGIC (Jiban's DOB: 29/10/2008)
+        const correctDOBs = ["29102008", "29/10/2008", "29-10-2008", "29 10 2008"];
+
+        function checkPassword() {
+            const userInput = document.getElementById("dobInput").value.trim();
+            const errMsg = document.getElementById("errMsg");
+
+            if(correctDOBs.includes(userInput)) {
+                errMsg.style.display = "none";
+                next(3); // Correct password -> Go to Welcome Page
+            } else {
+                errMsg.style.display = "block";
+                document.getElementById("dobInput").value = "";
+            }
+        }
+
         const questions = [
             "😂 Kya tu officially mera Best Friend hai?",
             "🍕 Kya tu mujhe lifetime treat dega?",
@@ -177,44 +238,34 @@
             current++;
 
             if(current >= questions.length) {
-                // Pre-Final step to setup for image reveal
                 qTitle.innerHTML = "🎉 Congratulations";
                 qText.innerHTML = "Bas ek last surprise baaki hai 😎";
                 this.innerHTML = "Open Gift 🎁";
                 noBtn.style.display = "none";
 
-                // Final Reveal Page (show the image)
                 this.onclick = function() {
-                    next(4);
+                    next(5);
                 }
                 return;
             }
 
-            // Load next question
             qTitle.innerHTML = "Question " + (current + 1) + " 😂";
             qText.innerHTML = questions[current];
         }
 
         // No Button Runaway Logic
-        noBtn.onmouseover = () => {
+        noBtn.onmouseover = () => { moveNoButton(); }
+        noBtn.ontouchstart = (e) => { e.preventDefault(); moveNoButton(); }
+
+        function moveNoButton() {
             noBtn.style.position = "absolute";
-            const maxX = window.innerWidth - noBtn.clientWidth - 20;
-            const maxY = window.innerHeight - noBtn.clientHeight - 20;
-            noBtn.style.left = Math.random() * maxX + "px";
-            noBtn.style.top = Math.random() * maxY + "px";
+            const maxX = window.innerWidth - noBtn.clientWidth - 40;
+            const maxY = window.innerHeight - noBtn.clientHeight - 40;
+            noBtn.style.left = Math.max(20, Math.random() * maxX) + "px";
+            noBtn.style.top = Math.max(20, Math.random() * maxY) + "px";
         }
 
-        // No Button Prank Logic (agar click ho gaya)
         noBtn.onclick = function() {
-            for(let i = 0; i < 40; i++) {
-                let b = document.createElement("button");
-                b.innerHTML = "NO 😂";
-                b.style.position = "absolute";
-                b.style.left = Math.random() * (window.innerWidth - 100) + "px";
-                b.style.top = Math.random() * (window.innerHeight - 50) + "px";
-                b.style.pointerEvents = "none"; 
-                document.body.appendChild(b);
-            }
             alert("❌ No Allowed 😂 Chup chap Yes daba!");
         }
     </script>
